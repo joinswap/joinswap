@@ -154,6 +154,7 @@ contract Oracle {
         address pair = IJoinFactory(factory).pairFor(tokenIn, tokenOut);
         Observation storage observation = pairObservations[pair];
         uint timeElapsed = block.timestamp - observation.timestamp;
+        require(timeElapsed > 2, "wait for 2 seconds");
         (uint price0Cumulative, uint price1Cumulative,) = JoinOracleLibrary.currentCumulativePrices(pair);
         (address token0,) = IJoinFactory(factory).sortTokens(tokenIn, tokenOut);
 
