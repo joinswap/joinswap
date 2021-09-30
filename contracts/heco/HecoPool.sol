@@ -313,6 +313,7 @@ contract HecoPool is Ownable {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
         updatePool(_pid);
+        uint256 tokenPending = 0;
         if (user.amount > 0) {
             uint256 pendingAmount = user.amount.mul(pool.accJoinPerShare).div(1e12).sub(user.rewardDebt);
             if (pendingAmount > 0) {
@@ -322,13 +323,13 @@ contract HecoPool is Ownable {
             IMasterChefHeco(multLpChef).deposit(poolCorrespond[_pid], 0);
             uint256 afterToken = IERC20(multLpToken).balanceOf(address(this));
             pool.accMultLpPerShare = pool.accMultLpPerShare.add(afterToken.sub(beforeToken).mul(1e12).div(pool.totalAmount));
-            uint256 tokenPending = user.amount.mul(pool.accMultLpPerShare).div(1e12).sub(user.multLpRewardDebt);
-            if (tokenPending > 0) {
-                IERC20(multLpToken).safeTransfer(_user, tokenPending);
-            }
+            tokenPending = user.amount.mul(pool.accMultLpPerShare).div(1e12).sub(user.multLpRewardDebt);
+//            if (tokenPending > 0) {
+//                IERC20(multLpToken).safeTransfer(_user, tokenPending);
+//            }
         }
         if (_amount > 0) {
-            pool.lpToken.safeTransferFrom(_user, address(this), _amount);
+//            pool.lpToken.safeTransferFrom(_user, address(this), _amount);
             if (pool.totalAmount == 0) {
                 IMasterChefHeco(multLpChef).deposit(poolCorrespond[_pid], _amount);
                 user.amount = user.amount.add(_amount);
@@ -345,6 +346,13 @@ contract HecoPool is Ownable {
         }
         user.rewardDebt = user.amount.mul(pool.accJoinPerShare).div(1e12);
         user.multLpRewardDebt = user.amount.mul(pool.accMultLpPerShare).div(1e12);
+
+        if (tokenPending > 0) {
+            IERC20(multLpToken).safeTransfer(_user, tokenPending);
+        }
+        if (_amount > 0) {
+            pool.lpToken.safeTransferFrom(_user, address(this), _amount);
+        }
         emit Deposit(_user, _pid, _amount);
     }
 
@@ -359,11 +367,14 @@ contract HecoPool is Ownable {
             }
         }
         if (_amount > 0) {
-            pool.lpToken.safeTransferFrom(_user, address(this), _amount);
+//            pool.lpToken.safeTransferFrom(_user, address(this), _amount);
             user.amount = user.amount.add(_amount);
             pool.totalAmount = pool.totalAmount.add(_amount);
         }
         user.rewardDebt = user.amount.mul(pool.accJoinPerShare).div(1e12);
+        if (_amount > 0) {
+            pool.lpToken.safeTransferFrom(_user, address(this), _amount);
+        }
         emit Deposit(_user, _pid, _amount);
     }
 
@@ -386,21 +397,25 @@ contract HecoPool is Ownable {
         if (pendingAmount > 0) {
             safeJoinTransfer(_user, pendingAmount);
         }
+        uint256 tokenPending = 0;
         if (_amount > 0) {
             uint256 beforeToken = IERC20(multLpToken).balanceOf(address(this));
             IMasterChefHeco(multLpChef).withdraw(poolCorrespond[_pid], _amount);
             uint256 afterToken = IERC20(multLpToken).balanceOf(address(this));
             pool.accMultLpPerShare = pool.accMultLpPerShare.add(afterToken.sub(beforeToken).mul(1e12).div(pool.totalAmount));
-            uint256 tokenPending = user.amount.mul(pool.accMultLpPerShare).div(1e12).sub(user.multLpRewardDebt);
-            if (tokenPending > 0) {
-                IERC20(multLpToken).safeTransfer(_user, tokenPending);
-            }
+            tokenPending = user.amount.mul(pool.accMultLpPerShare).div(1e12).sub(user.multLpRewardDebt);
+//            if (tokenPending > 0) {
+//                IERC20(multLpToken).safeTransfer(_user, tokenPending);
+//            }
             user.amount = user.amount.sub(_amount);
             pool.totalAmount = pool.totalAmount.sub(_amount);
             pool.lpToken.safeTransfer(_user, _amount);
         }
         user.rewardDebt = user.amount.mul(pool.accJoinPerShare).div(1e12);
         user.multLpRewardDebt = user.amount.mul(pool.accMultLpPerShare).div(1e12);
+        if (tokenPending > 0) {
+            IERC20(multLpToken).safeTransfer(_user, tokenPending);
+        }
         emit Withdraw(_user, _pid, _amount);
     }
 
@@ -416,9 +431,12 @@ contract HecoPool is Ownable {
         if (_amount > 0) {
             user.amount = user.amount.sub(_amount);
             pool.totalAmount = pool.totalAmount.sub(_amount);
-            pool.lpToken.safeTransfer(_user, _amount);
+//            pool.lpToken.safeTransfer(_user, _amount);
         }
         user.rewardDebt = user.amount.mul(pool.accJoinPerShare).div(1e12);
+        if (_amount > 0) {
+            pool.lpToken.safeTransfer(_user, _amount);
+        }
         emit Withdraw(_user, _pid, _amount);
     }
 
