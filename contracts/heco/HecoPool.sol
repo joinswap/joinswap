@@ -143,6 +143,7 @@ contract HecoPool is Ownable {
     // XXX DO NOT add the same LP token more than once. Rewards will be messed up if you do.
     function add(uint256 _allocPoint, IERC20 _lpToken, bool _withUpdate) public onlyOwner {
         require(address(_lpToken) != address(0), "_lpToken is the zero address");
+        require(LpOfPid[address(_lpToken)] == 0 && address(poolInfo[0].lpToken) != address(_lpToken), "_lpToken pool exists");
         if (_withUpdate) {
             massUpdatePools();
         }
